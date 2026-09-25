@@ -34,9 +34,41 @@ jobs:
           NEXT_PUBLIC_BASE_PATH: /bearlabs-quant
         run: npm run build
       - name: Prepare Pages artifact
+        env:
+          NEXT_PUBLIC_BASE_PATH: /bearlabs-quant
         run: |
-          touch dist/client/.nojekyll
-          cp dist/client/index.html dist/client/404.html
+          set -euo pipefail
+          cd dist/client
+          # vinext 会按 base 前缀把带哈希的静态资源输出到 dist/client/<base>/ 下，而 GitHub Pages
+          # 项目站点本身已经把产物根目录挂在 /<repo>/ 上，两者叠加就成了双前缀：
+          #   HTML 请求 /bearlabs-quant/_next/... 而产物里实际位于 bearlabs-quant/_next/...
+          # 结果是首页 200、所有 JS/CSS/图标全部 404（线上就是这么变成一个空壳的）。
+          # 修法：把多出来的这一层拍平到产物根目录。
+          prefix="${NEXT_PUBLIC_BASE_PATH%/}"
+          base_dir="${prefix#/}"
+          if [ -n "${base_dir}" ] && [ -d "${base_dir}" ]; then
+            cp -R "${base_dir}/." .
+            rm -rf "${base_dir}"
+          fi
+          touch .nojekyll
+          cp index.html 404.html
+          # 自检：index.html 中以 base 前缀开头的每一个资源，都必须在产物根目录真实存在。
+          # 宁可让这次构建红掉，也不要再悄悄上线一个打不开的空壳。
+          missing=0
+          for asset in $(grep -oE '(src|href)="/[^"]*"' index.html | sed -E 's/.*="([^"]*)"/\1/' | sort -u || true); do
+            case "${asset}" in
+              "${prefix}"/*)
+                if [ ! -f ".${asset#${prefix}}" ]; then
+                  echo "::error::产物缺少资源 ${asset}"
+                  missing=1
+                fi
+                ;;
+              *) echo "::warning::未加前缀的资源 ${asset}（不受本自检保护）" ;;
+            esac
+          done
+          [ "${missing}" -eq 0 ] || exit 1
+          echo "Pages 产物自检通过，顶层条目："
+          ls -1A
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
