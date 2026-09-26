@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import { Area, AreaChart, CartesianGrid, ReferenceLine, ResponsiveContainer, XAxis, YAxis } from "recharts";
 import { ArrowLeft, ArrowRight, BarChart3, BookMarked, BookOpen, Check, CheckCircle2, ChevronDown, ChevronRight, ClipboardCheck, Code2, Compass, FlaskConical, GitBranch, GraduationCap, Heart, LayoutDashboard, Library, Menu, Moon, Search, Sparkles, Sun, Target, X } from "lucide-react";
 import { chapters, chapterMap, learningPaths, lessonMap, lessons, stages, totalExercises, totalUnits, type Exercise, type Lesson } from "@/lib/curriculum";
@@ -23,12 +24,17 @@ export function LearningStudio() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem(STORE) || "{}");
-      setLessonId(saved.lessonId || "c01-l01"); setMode(saved.mode || "pro");
-      setCompleted(saved.completed || []); setFavorites(saved.favorites || []); setMistakes(saved.mistakes || []); setDark(saved.dark || false);
-    } catch { /* Local state is optional. */ }
-    setReady(true);
+    let active = true;
+    queueMicrotask(() => {
+      if (!active) return;
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORE) || "{}");
+        setLessonId(saved.lessonId || "c01-l01"); setMode(saved.mode || "pro");
+        setCompleted(saved.completed || []); setFavorites(saved.favorites || []); setMistakes(saved.mistakes || []); setDark(saved.dark || false);
+      } catch { /* Local state is optional. */ }
+      setReady(true);
+    });
+    return () => { active = false; };
   }, []);
   useEffect(() => { if (ready) localStorage.setItem(STORE, JSON.stringify({ lessonId, mode, completed, favorites, mistakes, dark })); }, [ready, lessonId, mode, completed, favorites, mistakes, dark]);
 
@@ -67,7 +73,7 @@ function Catalog({ query, setQuery, openLesson, completed, onAbout }: { query:st
         {stages.map(stage => <section className="stage" key={stage.id} style={{"--stage":stage.color} as React.CSSProperties}><div className="stage-head"><span>{stage.eyebrow}</span><div><h2>{stage.title}</h2><p>{stage.description}</p></div><b>{stage.chapterIds.reduce((n,id)=>n+(chapterMap.get(id)?.lessonIds.length||0),0)} 课</b></div>
           <div className="chapter-grid">{stage.chapterIds.map(id => { const c=chapterMap.get(id)!; const done=c.lessonIds.filter(x=>completed.includes(x)).length; return <article className="chapter-card" key={id}><div className="chapter-number">{String(id).padStart(2,"0")}</div><div className="chapter-meta"><span>{c.level}</span><span>{c.units.length} 单元</span><span>{c.lessonIds.length} 课</span></div><h3>{c.title}</h3><p>{c.summary}</p><div className="topic-row">{c.topics.slice(0,4).map(t=><span key={t}>{t}</span>)}</div><div className="card-foot"><div><i><b style={{width:`${done/c.lessonIds.length*100}%`}}/></i><small>{done}/{c.lessonIds.length}</small></div><button onClick={()=>openLesson(c.lessonIds[0])}>查看课程 <ArrowRight size={15}/></button></div></article>})}</div>
         </section>)}
-        <section className="author-teaser"><img src={`${PUBLIC_BASE}/author-avatar.jpg`} alt="作者 Solips-Singularitat"/><div><span className="section-kicker">ABOUT THE AUTHOR</span><h2>一座由研究问题驱动的个人实验室</h2><p>本站由 Solips-Singularitat 独立完成内容设计与开发，并与中国美术学院网络社会研究所的研究兴趣保持对话。</p></div><button onClick={onAbout}>关于本站与作者 <ArrowRight size={16}/></button></section>
+        <section className="author-teaser"><Image src={`${PUBLIC_BASE}/author-avatar.jpg`} width={96} height={96} alt="作者 Solips-Singularitat"/><div><span className="section-kicker">ABOUT THE AUTHOR</span><h2>一座由研究问题驱动的个人实验室</h2><p>本站由 Solips-Singularitat 独立完成内容设计与开发，并与中国美术学院网络社会研究所的研究兴趣保持对话。</p></div><button onClick={onAbout}>关于本站与作者 <ArrowRight size={16}/></button></section>
       </>}
     </section></main>;
 }
@@ -79,10 +85,10 @@ function LessonWorkspace({ lesson, mode, setMode, completed, favorite, onComplet
       <header className="lesson-header"><div className="lesson-label"><span>{lesson.id.toUpperCase()}</span><span>{lesson.difficulty}</span><span>{lesson.minutes} 分钟</span></div><h1>{lesson.title}</h1><p>{chapter.summary}</p><div className="lesson-actions"><button className={completed.includes(lesson.id)?"done":"primary"} onClick={onComplete}>{completed.includes(lesson.id)?<CheckCircle2 size={17}/>:<Check size={17}/>} {completed.includes(lesson.id)?"已完成":"标记完成"}</button><button onClick={onFavorite}><Heart size={17} fill={favorite?"currentColor":"none"}/>{favorite?"已收藏":"收藏"}</button></div></header>
       <section className="overview-grid"><div className="paper-card objectives"><span className="card-eyebrow"><Target size={15}/>学习目标</span><ol>{lesson.objectives.map((x,i)=><li key={x}><b>{i+1}</b>{x}</li>)}</ol></div><div className="paper-card lesson-info"><div><small>先修知识</small><b>{lesson.prerequisites.join("、")}</b></div><div><small>本课关键词</small><p>{lesson.keywords.slice(0,5).map(x=><span key={x}>{x}</span>)}</p></div></div></section>
       <div className="reading-toggle"><span><BookOpen size={17}/>讲解模式</span><div><button className={mode==="pro"?"active":""} onClick={()=>setMode("pro")}>专业版</button><button className={mode==="kid"?"kid-active":""} onClick={()=>setMode("kid")}>宝宝巴士版</button></div><small>{mode==="pro"?"严谨定义 · 推导 · 研究边界":"比喻 · 分步骤 · 不省略重点"}</small></div>
-      {lesson.sections.map((section,i)=><section className="reading-section" id={section.id} key={section.id}><div className="section-index">{String(i+1).padStart(2,"0")}</div><div><h2>{section.title}</h2>{(mode==="pro"?section.pro:section.kid).map((p,j)=><p key={j}>{p}</p>)}{i===2 && <FormulaBox lesson={lesson}/>}</div></section>)}
+      {lesson.sections.map((section,i)=><section className="reading-section" id={section.id} key={section.id}><div className="section-index">{String(i+1).padStart(2,"0")}</div><div><h2>{section.title}</h2>{(mode==="pro"?section.pro:section.kid).map((p,j)=><p key={j}>{p}</p>)}{i===2 && lesson.formula && <FormulaBox lesson={lesson}/>}</div></section>)}
       <section className="content-block"><BlockTitle icon={<BarChart3/>} overline="METHOD COMPARISON" title="什么时候选它，什么时候不要选"/><div className="table-wrap"><table><thead><tr><th>方法</th><th>最适合回答</th><th>优势</th><th>限制</th></tr></thead><tbody>{lesson.comparison.map(r=><tr key={r.method}><th>{r.method}</th><td>{r.bestFor}</td><td>{r.strength}</td><td>{r.limit}</td></tr>)}</tbody></table></div></section>
       <section className="content-block example"><BlockTitle icon={<Sparkles/>} overline="WORKED EXAMPLE" title="完整例题：从问题到结论"/><div className="case-question">{lesson.workedExample.question}</div><ol className="steps">{lesson.workedExample.steps.map((x,i)=><li key={x}><b>{i+1}</b><span>{x}</span></li>)}</ol><div className="answer-box"><b>结论与边界</b><p>{lesson.workedExample.answer}</p></div></section>
-      <section className="content-block code-block"><div className="block-title"><Code2/><div><span>PYTHON LAB</span><h2>可复现代码</h2></div><button onClick={async()=>{await navigator.clipboard.writeText(lesson.python);setCopied(true);setTimeout(()=>setCopied(false),1500)}}>{copied?"已复制":"复制代码"}</button></div><pre><code>{lesson.python}</code></pre><div className="output"><b>怎样读输出</b><p>{lesson.expectedOutput}</p></div></section>
+      {lesson.codeLab && <section className="content-block code-block"><div className="block-title"><Code2/><div><span>PYTHON LAB · 教学必要</span><h2>{lesson.codeLab.purpose}</h2></div><button onClick={async()=>{await navigator.clipboard.writeText(lesson.codeLab!.code);setCopied(true);setTimeout(()=>setCopied(false),1500)}}>{copied?"已复制":"复制代码"}</button></div><p><b>数据：</b>{lesson.codeLab.data}</p><pre><code>{lesson.codeLab.code}</code></pre><div className="output"><b>预期输出</b><p>{lesson.codeLab.expectedOutput}</p><b>怎样读输出</b><p>{lesson.codeLab.interpretation}</p><b>必须检查</b><p>{lesson.codeLab.diagnostics}</p></div></section>}
       <section className="content-block report"><BlockTitle icon={<BookMarked/>} overline="REPORTING" title="论文报告骨架"/><blockquote>{lesson.reportTemplate}</blockquote></section>
       <section className="content-block"><BlockTitle icon={<GraduationCap/>} overline="GLOSSARY & REFERENCES" title="术语与延伸阅读"/><div className="glossary">{lesson.glossary.map(g=><div key={g.term}><b>{g.term}</b><p>{g.meaning}</p></div>)}</div><ul className="references">{lesson.references.map(x=><li key={x}>{x}</li>)}</ul></section>
       <section className="practice-cta"><div><span>本课训练 · 10 题</span><h2>现在检查你是否真的会用</h2><p>4 道简单、4 道中等、2 道困难题，每题都有分步解析与宝宝版解释。</p></div><button onClick={openPractice}>开始练习 <ArrowRight size={17}/></button></section>
@@ -117,7 +123,7 @@ function Empty({text}:{text:string}) { return <div className="empty"><BookOpen/>
 function About() {
   return <main className="about-page">
     <header className="about-hero"><span className="section-kicker">ABOUT · 关于</span><h1>关于贝尔实验室 · 量化研究学习站</h1><p>一座研究“如何知道”的个人学习站：从概率、测量和因果，到田野、编码与博士论文。</p></header>
-    <section className="author-profile"><img src={`${PUBLIC_BASE}/author-avatar.jpg`} alt="作者 Solips-Singularitat"/><div><span>AUTHOR · 内容与开发</span><h2>Solips-Singularitat</h2><p>本站作者，负责课程策划、内容写作、交互设计与开发。关注网络社会、数字文化、研究方法，以及技术如何改变知识生产。</p><div className="profile-links"><a href="mailto:2451101123@qq.com">2451101123@qq.com</a><a href="https://github.com/solip-singularity" target="_blank" rel="noreferrer">GitHub ↗</a></div></div></section>
+    <section className="author-profile"><Image src={`${PUBLIC_BASE}/author-avatar.jpg`} width={240} height={240} alt="作者 Solips-Singularitat"/><div><span>AUTHOR · 内容与开发</span><h2>Solips-Singularitat</h2><p>本站作者，负责课程策划、内容写作、交互设计与开发。关注网络社会、数字文化、研究方法，以及技术如何改变知识生产。</p><div className="profile-links"><a href="mailto:2451101123@qq.com">2451101123@qq.com</a><a href="https://github.com/solip-singularity" target="_blank" rel="noreferrer">GitHub ↗</a></div></div></section>
     <div className="about-grid">
       <section className="about-prose"><span className="section-kicker">WHY THIS SITE</span><h2>为什么建立这个学习站</h2><p>这是“贝尔实验室”学习项目的量化研究分站。概率把不确定性变成可以讨论的语言，但真实研究不只需要计算：它还需要提出好问题、理解资料如何生成、知道一个结论能够走多远。</p><p>因此，这里不是统计软件说明书，也不是方法名词陈列馆。课程从大学概率统计出发，逐步进入社会科学量化方法、质性研究、因果推断、证据综合和博士论文实践。</p><blockquote>复杂方法的价值，不在于显得复杂，而在于让研究问题、证据与结论之间的关系更清楚。</blockquote>
         <h3>怎样使用本站</h3><ul><li>从学习路径选一条主线，或从课程目录直接进入具体问题。</li><li>先读“为什么用”，再操作例题与实验，最后完成十道分级练习。</li><li>专业版负责严谨定义与证据边界；宝宝巴士版负责把同一逻辑讲到真正听懂。</li></ul>
@@ -125,7 +131,7 @@ function About() {
       </section>
       <aside className="about-facts"><div><small>课程规模</small><b>24 章 · 180 课</b></div><div><small>练习系统</small><b>1800 道分级题</b></div><div><small>核心受众</small><b>社会科学学习者</b></div><div><small>项目性质</small><b>个人教育项目</b></div></aside>
     </div>
-    <section className="institute-profile"><img src={`${PUBLIC_BASE}/ins-icon.jpg`} alt="中国美术学院网络社会研究所 INS 图标"/><div><span className="section-kicker">INS · RESEARCH CONTEXT</span><h2>中国美术学院 · 网络社会研究所</h2><p className="institute-en">Institute of Network Society, School of Intermedia Art, China Academy of Art</p><p>网络社会研究所关注网络社会中的理论、艺术与实践问题——从平台与算法，到数字文化与媒介理论。其工作包括网络社会年会、国际讲座与研究者论坛、黑客松与工作坊，以及出版与译介。</p><p className="disclaimer">本站作者来自该研究所。本网站是个人学习与交流项目，不代表研究所官方发布；研究所信息如与官网不一致，以官网为准。</p><a href="https://www.caa-ins.org/" target="_blank" rel="noreferrer">访问研究所官网 ↗</a></div></section>
+    <section className="institute-profile"><Image src={`${PUBLIC_BASE}/ins-icon.jpg`} width={200} height={200} alt="中国美术学院网络社会研究所 INS 图标"/><div><span className="section-kicker">INS · RESEARCH CONTEXT</span><h2>中国美术学院 · 网络社会研究所</h2><p className="institute-en">Institute of Network Society, School of Intermedia Art, China Academy of Art</p><p>网络社会研究所关注网络社会中的理论、艺术与实践问题——从平台与算法，到数字文化与媒介理论。其工作包括网络社会年会、国际讲座与研究者论坛、黑客松与工作坊，以及出版与译介。</p><p className="disclaimer">本站作者来自该研究所。本网站是个人学习与交流项目，不代表研究所官方发布；研究所信息如与官网不一致，以官网为准。</p><a href="https://www.caa-ins.org/" target="_blank" rel="noreferrer">访问研究所官网 ↗</a></div></section>
     <footer className="about-footer"><span>BearLabs · Quantitative Research · 2026</span><p>让方法回到问题，让证据保持诚实。</p></footer>
   </main>;
 }

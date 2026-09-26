@@ -11,10 +11,8 @@ export type Chapter = {
   caution: string;
   formula: string;
   caseStudy: string;
-  python: string;
 };
 
-const py = (body: string) => `import numpy as np\nimport pandas as pd\n${body}`;
 
 export const chapters: Chapter[] = [
   {
@@ -30,7 +28,6 @@ export const chapters: Chapter[] = [
     caution: "概率不是个人愿望；独立也不等于两个事件完全没有关系。",
     formula: "P(A|B) = P(A∩B) / P(B)；P(A) = Σ P(A|Bᵢ)P(Bᵢ)",
     caseStudy: "社会调查：已知某群体回复问卷的概率不同，如何由回复情况反推样本属于哪个群体。",
-    python: py("rng = np.random.default_rng(42)\ntrials = rng.binomial(1, 0.5, 1000)\nprint(trials.cumsum() / np.arange(1, 1001))"),
   },
   {
     id: 2,
@@ -45,7 +42,6 @@ export const chapters: Chapter[] = [
     caution: "看到钟形图不代表数据必然正态，也不能只凭均值判断分布。",
     formula: "F(x)=P(X≤x)；Z=(X−μ)/σ；∫ f(x)dx = 1",
     caseStudy: "心理测验：把量表得分标准化，比较来自不同版本问卷的被试。",
-    python: py("from scipy import stats\nx = np.linspace(-3, 3, 101)\ndensity = stats.norm.pdf(x)\nprint(pd.DataFrame({'z': x, 'density': density}).head())"),
   },
   {
     id: 3,
@@ -60,7 +56,6 @@ export const chapters: Chapter[] = [
     caution: "零相关通常不等于独立，只有某些特殊分布下才可等价。",
     formula: "fₓ(x)=∫f(x,y)dy；X⊥Y ⇔ f(x,y)=fₓ(x)fᵧ(y)",
     caseStudy: "教育研究：联合考察家庭社会经济地位与学习投入对成绩的分布。",
-    python: py("mean = [0, 0]\ncov = [[1, .7], [.7, 1]]\nx, y = np.random.default_rng(7).multivariate_normal(mean, cov, 500).T\nprint(np.corrcoef(x, y))"),
   },
   {
     id: 4,
@@ -75,7 +70,6 @@ export const chapters: Chapter[] = [
     caution: "均值可能被极端值拉动；相关关系本身不能证明因果。",
     formula: "E(X)=Σxp(x)；Var(X)=E[(X−μ)²]；ρ=Cov(X,Y)/(σₓσᵧ)",
     caseStudy: "社会分层：比较不同群体收入均值、内部差异及教育与收入的相关程度。",
-    python: py("df = pd.DataFrame({'education':[9,12,16,18], 'income':[3,5,9,12]})\nprint(df.describe())\nprint(df.cov(), df.corr())"),
   },
   {
     id: 5,
@@ -90,7 +84,6 @@ export const chapters: Chapter[] = [
     caution: "重尾、强依赖或样本过小时，收敛可能很慢甚至失效。",
     formula: "X̄ₙ → μ；√n(X̄−μ)/σ ⇒ N(0,1)",
     caseStudy: "民意调查：为什么随机访问人数增加后，支持率估计会更稳定。",
-    python: py("rng = np.random.default_rng(8)\nmeans = [rng.exponential(1, 40).mean() for _ in range(2000)]\nprint(np.mean(means), np.std(means))"),
   },
   {
     id: 6,
@@ -105,7 +98,6 @@ export const chapters: Chapter[] = [
     caution: "便利样本不能因为样本量大就自动变成有代表性的随机样本。",
     formula: "T=(X̄−μ)/(S/√n) ~ t(n−1)；(n−1)S²/σ² ~ χ²(n−1)",
     caseStudy: "人类学跨社区调查：比较简单随机、分层与整群抽样的代表性和成本。",
-    python: py("rng = np.random.default_rng(9)\nsamples = rng.normal(100, 15, (1000, 25))\nprint(samples.mean(axis=1).std())"),
   },
   {
     id: 7,
@@ -120,7 +112,6 @@ export const chapters: Chapter[] = [
     caution: "95% 置信区间不是说固定参数有 95% 概率落在本次区间内。",
     formula: "L(θ)=∏f(xᵢ|θ)；CI: θ̂ ± 临界值×SE(θ̂)",
     caseStudy: "心理学：估计干预后平均焦虑下降幅度及其置信区间。",
-    python: py("from scipy import stats\nx = np.array([4.1, 3.7, 4.4, 3.9, 4.2])\nprint(stats.t.interval(.95, len(x)-1, loc=x.mean(), scale=stats.sem(x)))"),
   },
   {
     id: 8,
@@ -135,7 +126,6 @@ export const chapters: Chapter[] = [
     caution: "显著不等于重要，不显著也不等于完全没有效应。",
     formula: "p=P(T≥T观察 | H₀)；Power=1−β；χ²=Σ(O−E)²/E",
     caseStudy: "社会学：用卡方检验判断就业类型是否与城乡背景独立。",
-    python: py("from scipy.stats import chi2_contingency\ntable = np.array([[42, 18],[25, 35]])\nchi2, p, dof, expected = chi2_contingency(table)\nprint(chi2, p, expected)"),
   },
   {
     id: 9,
@@ -150,7 +140,6 @@ export const chapters: Chapter[] = [
     caution: "回归系数依赖模型设定；错误控制变量可能引入而非消除偏差。",
     formula: "Y=Xβ+ε；β̂=(XᵀX)⁻¹XᵀY；F=MS组间/MS组内",
     caseStudy: "教育研究：比较三种教学法，并控制学生入学成绩与学校差异。",
-    python: py("import statsmodels.formula.api as smf\nmodel = smf.ols('score ~ hours + C(group)', data=df).fit()\nprint(model.summary())"),
   },
   {
     id: 10,
@@ -165,7 +154,6 @@ export const chapters: Chapter[] = [
     caution: "方便抽样、诱导题和事后修改假设会破坏研究可信度。",
     formula: "观测值 = 构念 + 测量误差；加权估计 = Σwᵢyᵢ/Σwᵢ",
     caseStudy: "社会调查：设计关于代际流动的抽样、问卷与缺失数据处理方案。",
-    python: py("weighted_mean = np.average(df['income'], weights=df['survey_weight'])\nprint(weighted_mean)"),
   },
   {
     id: 11,
@@ -180,7 +168,6 @@ export const chapters: Chapter[] = [
     caution: "优势比不是概率比；稀有事件、过度离散和分离需要特殊处理。",
     formula: "log[p/(1−p)] = Xβ；log(E[Y|X])=Xβ",
     caseStudy: "公共政策：预测居民是否参与社区治理，并解释教育的边际效应。",
-    python: py("import statsmodels.formula.api as smf\nmodel = smf.logit('participate ~ age + education', data=df).fit()\nprint(model.get_margeff().summary())"),
   },
   {
     id: 12,
@@ -195,7 +182,6 @@ export const chapters: Chapter[] = [
     caution: "高 α 不代表单维或有效；好看的拟合指标不能替代理论。",
     formula: "x = Λξ + δ；y = Bη + Γξ + ζ",
     caseStudy: "心理学：验证抑郁量表在不同文化群体中是否测量同一构念。",
-    python: py("# 推荐使用 semopy 复现 CFA；先检查数据字典与反向题\nitems = df.filter(regex='^item_')\nprint(items.corr())"),
   },
   {
     id: 13,
@@ -210,7 +196,6 @@ export const chapters: Chapter[] = [
     caution: "控制越多不一定越好；碰撞变量和处理后的变量可能制造偏差。",
     formula: "ATE=E[Y(1)−Y(0)]；DID=(Yₜ−Y₀)处理−(Yₜ−Y₀)对照",
     caseStudy: "政策评估：使用双重差分估计免费托育政策对女性就业的影响。",
-    python: py("import statsmodels.formula.api as smf\nmodel = smf.ols('employment ~ treated * post + C(region) + C(year)', data=df).fit(cov_type='cluster', cov_kwds={'groups':df['region']})\nprint(model.params['treated:post'])"),
   },
   {
     id: 14,
@@ -225,7 +210,6 @@ export const chapters: Chapter[] = [
     caution: "层级数量过少、删失机制异常或比例风险不成立会影响推断。",
     formula: "yᵢⱼ=β₀+β₁xᵢⱼ+uⱼ+εᵢⱼ；h(t|X)=h₀(t)eˣᵝ",
     caseStudy: "心理纵向研究：追踪个体幸福感，并区分个人变化与社区差异。",
-    python: py("import statsmodels.formula.api as smf\nmodel = smf.mixedlm('wellbeing ~ time', data=df, groups=df['person']).fit()\nprint(model.summary())"),
   },
   {
     id: 15,
@@ -240,7 +224,6 @@ export const chapters: Chapter[] = [
     caution: "先验需透明，MCMC 必须检查收敛，后验也依赖模型假设。",
     formula: "p(θ|y) ∝ p(y|θ)p(θ)",
     caseStudy: "小样本人类学：结合历史研究与新田野数据估计文化实践比例。",
-    python: py("# Beta-Binomial 更新\na, b = 2, 2\nsuccess, total = 18, 30\nprint(a + success, b + total - success)"),
   },
   {
     id: 16,
@@ -255,7 +238,6 @@ export const chapters: Chapter[] = [
     caution: "词频不是含义，空间邻接不是因果，网络边界选择会改变结论。",
     formula: "Yₜ=c+φYₜ₋₁+εₜ；Moran's I ∝ Σwᵢⱼ(zᵢzⱼ)",
     caseStudy: "社会网络：研究健康信息如何通过社区关系扩散。",
-    python: py("# 时间序列最小示例\ns = pd.Series(df['mentions']).astype(float)\nprint(s.autocorr(lag=1), s.rolling(7).mean().tail())"),
   },
   {
     id: 17,
@@ -270,7 +252,6 @@ export const chapters: Chapter[] = [
     caution: "高预测准确率不能自动证明因果或公平。",
     formula: "CV error = (1/K)Σ Loss(yᵢ, ŷᵢ⁽⁻ᵏ⁾)；Lasso: RSS+λΣ|βⱼ|",
     caseStudy: "人工智能：比较不同模型的准确率、校准度与群体公平性。",
-    python: py("from sklearn.model_selection import cross_val_score\nfrom sklearn.linear_model import LogisticRegression\nscore = cross_val_score(LogisticRegression(), X, y, cv=5, scoring='roc_auc')\nprint(score.mean(), score.std())"),
   },
   {
     id: 18,
@@ -285,7 +266,6 @@ export const chapters: Chapter[] = [
     caution: "“饱和”不是没发现新词；AI 不能代替研究者作理论判断或处理敏感原文。",
     formula: "资料片段 → 初始编码 → 聚焦范畴 → 持续比较 → 理论命题",
     caseStudy: "人类学：由青年迁居访谈发展“身份协商”的过程理论。",
-    python: py("# 仅统计编码分布；理论解释仍由研究者完成\ncodes = pd.Series(['归属','不确定','归属','策略'])\nprint(codes.value_counts())"),
   },
   {
     id: 19,
@@ -300,7 +280,6 @@ export const chapters: Chapter[] = [
     caution: "质性样本不能当作统计代表样本，两种证据冲突时必须解释而非强行平均。",
     formula: "QUAL → quan（探索式）；QUAN → qual（解释式）；QUAL + QUAN（聚合式）",
     caseStudy: "跨文化研究：先民族志识别概念，再开发量表并检验测量等值性。",
-    python: py("joint = pd.crosstab(df['quant_pattern'], df['qual_theme'], normalize='index')\nprint(joint)"),
   },
   {
     id: 20,
@@ -315,7 +294,6 @@ export const chapters: Chapter[] = [
     caution: "复杂算法无法修复没有重叠、错误时间顺序或关键混杂未测量。",
     formula: "E[Y(a)] = ∫E[Y|A=a,L=l]p(l)dl；AIPW = outcome model + propensity correction",
     caseStudy: "政策研究：估计培训对不同教育群体就业的异质性影响。",
-    python: py("# 先检查倾向得分重叠，再拟合因果模型\nprint(df.groupby('treated')['propensity'].describe())"),
   },
   {
     id: 21,
@@ -330,7 +308,6 @@ export const chapters: Chapter[] = [
     caution: "模型复杂度必须与样本和理论匹配；局部最优、不可识别和过拟合需检查。",
     formula: "g(E[yᵢⱼ]) = f(xᵢⱼ)+Zᵢⱼuⱼ；ηₜ = Aηₜ₋₁+ζₜ",
     caseStudy: "心理学：建立跨学校、跨时间的潜增长模型并检验量表等值性。",
-    python: py("# 先描述每个层级的样本规模\nprint(df.groupby('school')['person'].nunique().describe())"),
   },
   {
     id: 22,
@@ -345,7 +322,6 @@ export const chapters: Chapter[] = [
     caution: "嵌入和大模型输出不是天然有效测量；需人工验证、偏差审计和版本记录。",
     formula: "总误差 = 偏差² + 方差 + 不可约误差；Calibration: P(Y=1|p̂≈p)≈p",
     caseStudy: "人工智能：审计文本分类器在不同社会群体上的校准度和错误模式。",
-    python: py("from sklearn.calibration import calibration_curve\nobs, pred = calibration_curve(y, probability, n_bins=10)\nprint(pd.DataFrame({'predicted':pred,'observed':obs}))"),
   },
   {
     id: 23,
@@ -360,7 +336,6 @@ export const chapters: Chapter[] = [
     caution: "发表偏差、重复样本和不可比定义会让精确数字产生虚假安全感。",
     formula: "θ̂_RE = Σwᵢyᵢ/Σwᵢ；wᵢ=1/(vᵢ+τ²)",
     caseStudy: "心理干预：整合不同国家研究，并检验文化背景是否解释异质性。",
-    python: py("effects = pd.DataFrame({'yi':[.2,.5,.1,.4], 'vi':[.04,.05,.03,.06]})\neffects['w_fixed'] = 1/effects.vi\nprint(np.average(effects.yi, weights=effects.w_fixed))"),
   },
   {
     id: 24,
@@ -375,7 +350,6 @@ export const chapters: Chapter[] = [
     caution: "AI 可辅助整理和检查，但不得编造文献、数据、编码或替代作者承担判断责任。",
     formula: "理论问题 → 目标量/核心命题 → 设计 → 数据 → 分析 → 证据边界",
     caseStudy: "博士综合任务：完成跨文化社会支持研究的混合方法预注册与分析方案。",
-    python: py("# 建议把环境、随机种子和数据版本写入复现记录\nimport platform\nprint({'python': platform.python_version(), 'seed': 42, 'data_version':'v1.0'})"),
   },
 ];
 
