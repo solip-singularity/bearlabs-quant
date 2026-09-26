@@ -355,15 +355,6 @@ export const chapters: Chapter[] = [
 
 export const chapterParts = ["数理基础", "社会科学", "博士进阶"] as const;
 
-export const researchTools = [
-  { name: "方法导航器", desc: "从研究问题、结果类型和资料结构得到候选方法。", icon: "compass" },
-  { name: "研究设计画布", desc: "对齐理论、样本、测量、分析、伦理与局限。", icon: "layout" },
-  { name: "扎根理论编码台", desc: "练习开放编码、持续比较、备忘录和范畴聚合。", icon: "tags" },
-  { name: "因果图实验室", desc: "识别混杂、碰撞变量与最小调整集合。", icon: "git" },
-  { name: "功效规划器", desc: "观察样本量、效应量与统计功效的联动。", icon: "activity" },
-  { name: "统计假设检查器", desc: "按方法逐项核对分布、独立性与模型诊断。", icon: "check" },
-];
-
 export function buildExercises(chapter: Chapter) {
   const [a, b, c] = chapter.topics;
   return [

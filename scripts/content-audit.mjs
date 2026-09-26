@@ -1,4 +1,5 @@
 import { chapters, lessons, stages, totalExercises, totalUnits } from "../lib/curriculum.ts";
+import { methodCategories, methodNodes } from "../lib/method-graph.ts";
 
 const errors=[];
 const expected=[7,8,7,7,6,9,9,11,8,7,7,7,9,7,6,7,6,8,7,8,8,8,7,6];
@@ -11,6 +12,7 @@ if(chapters.length!==24) errors.push(`章节应为24，实际${chapters.length}`
 if(totalUnits!==60) errors.push(`单元应为60，实际${totalUnits}`);
 if(lessons.length!==180) errors.push(`课程应为180，实际${lessons.length}`);
 if(totalExercises!==1800) errors.push(`练习应为1800，实际${totalExercises}`);
+if(methodCategories.length!==7) errors.push(`方法图谱分类应为7，实际${methodCategories.length}`);
 
 const ids=new Set();
 const allPro=[];
@@ -63,5 +65,32 @@ chapters.forEach((chapter,index)=>{
 if(duplicates(allPro)>0) errors.push(`专业版存在${duplicates(allPro)}个完全重复段落`);
 if(duplicates(allKid)>0) errors.push(`宝宝版存在${duplicates(allKid)}个完全重复段落`);
 
+const graphIds=new Set();
+const branchIds=new Set();
+methodCategories.forEach(category=>{
+  if(graphIds.has(category.id)) errors.push(`方法图谱重复分类ID ${category.id}`);
+  graphIds.add(category.id);
+  if(!category.branches.length) errors.push(`方法图谱分类 ${category.id} 没有判断分支`);
+  category.branches.forEach(branch=>{
+    if(branchIds.has(branch.id)) errors.push(`方法图谱重复分支ID ${branch.id}`);
+    branchIds.add(branch.id);
+    if(!branch.methods.length) errors.push(`方法图谱分支 ${branch.id} 是孤立节点`);
+  });
+});
+methodNodes.forEach(method=>{
+  if(graphIds.has(method.id)) errors.push(`方法图谱重复节点ID ${method.id}`);
+  graphIds.add(method.id);
+  if(!ids.has(method.lessonId)) errors.push(`${method.id} 指向不存在的课时 ${method.lessonId}`);
+  for(const key of ["data","summary"]) if(!method[key]?.trim()) errors.push(`${method.id} 缺少${key}`);
+  for(const key of ["useWhen","assumptions","avoidWhen","mistakes","alternatives","keywords"]) if(!method[key]?.length) errors.push(`${method.id} 缺少${key}`);
+  if(method.mode==="formula"){
+    if(!method.formula?.expression||!method.formula.symbols.length) errors.push(`${method.id} 公式或符号解释不完整`);
+    if(method.process) errors.push(`${method.id} 公式节点混入分析流程`);
+  } else {
+    if(method.formula) errors.push(`${method.id} 非公式节点不应显示公式`);
+    if(!method.process?.length||method.process[0]!=="本方法依靠分析流程，不以单一公式作判断。") errors.push(`${method.id} 缺少无公式声明或分析流程`);
+  }
+});
+
 if(errors.length){console.error(errors.join("\n"));process.exit(1);}
-console.log(`严格内容审计通过：${stages.length}阶段、${chapters.length}章、${totalUnits}单元、${lessons.length}课、${totalExercises}题；正文无完全重复段落；${lessons.filter(x=>x.codeLab).length}课保留必要代码实验。`);
+console.log(`严格内容审计通过：${stages.length}阶段、${chapters.length}章、${totalUnits}单元、${lessons.length}课、${totalExercises}题；正文无完全重复段落；${methodCategories.length}类、${methodNodes.length}个方法图谱节点全部有效。`);
